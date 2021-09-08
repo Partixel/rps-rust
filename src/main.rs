@@ -13,7 +13,10 @@ fn get_name(choice: u32) -> &'static str {
 fn get_num(choice: String) -> Result<u32, String> {
     let choice = choice.trim();
     match choice.parse() {
-        Ok(num) => Ok(num),
+        Ok(num) => match num {
+            0..=2 => Ok(num),
+            _ => Err("Invalid input".to_string()),
+        },
         Err(_) => match choice {
             "rock" | "r" => Ok(0),
             "paper" | "p" => Ok(1),
@@ -54,8 +57,6 @@ fn main() {
             );
         }
 
-        run += 1;
-
         let mut choice = String::new();
         io::stdin()
             .read_line(&mut choice)
@@ -68,6 +69,8 @@ fn main() {
                 continue;
             }
         };
+
+        run += 1;
 
         let npc_choice = rand::thread_rng().gen_range(0..=2);
         println!(
