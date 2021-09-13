@@ -1,37 +1,27 @@
 use rand::Rng;
 use std::io;
 
-fn get_name(choice: u32) -> &'static str {
-    match choice {
-        0 => "Rock",
-        1 => "Paper",
-        2 => "Scissors",
-        _ => unreachable!(),
-    }
+#[derive(PartialEq)]
+enum Choice {
+    Rock,
+    Paper,
+    Scissors,
 }
 
-fn get_num(choice: String) -> Result<u32, String> {
-    let choice = choice.trim();
-    match choice.parse() {
-        Ok(num) => match num {
-            0..=2 => Ok(num),
-            _ => Err("Invalid input".to_string()),
-        },
-        Err(_) => match choice {
-            "rock" | "r" => Ok(0),
-            "paper" | "p" => Ok(1),
-            "scissors" | "scissor" | "s" => Ok(2),
-            _ => Err("Invalid input".to_string()),
-        },
+impl Choice {
+    fn get_name(&self) -> &'static str {
+        match self {
+            Choice::Rock => "Rock",
+            Choice::Paper => "Paper",
+            Choice::Scissors => "Scissors",
+        }
     }
-}
-
-fn get_strength(choice: u32) -> u32 {
-    match choice {
-        0 => 2,
-        1 => 0,
-        2 => 1,
-        _ => unreachable!(),
+    fn get_beats(&self) -> Choice {
+        match self {
+            Choice::Rock => Choice::Scissors,
+            Choice::Paper => Choice::Rock,
+            Choice::Scissors => Choice::Paper,
+        }
     }
 }
 
@@ -43,17 +33,15 @@ fn main() {
     loop {
         if run >= 3 {
             println!(
-                "Rock/r/0, Paper/p/1, Scissors/s/2 - Best out of 3 - Run number {} - Score is {}:{} - Continuing due to tie",
+                "Rock/r, Paper/p, Scissors/s - Best out of 3 - Run number {} - Score is {}:{} - Continuing due to tie",
                 run,
                 player_wins,
                 npc_wins
             );
         } else {
             println!(
-                "Rock/r/0, Paper/p/1, Scissors/s/2 - Best out of 3 - Run number {} - Score is {}:{}",
-                run,
-                player_wins,
-                npc_wins
+                "Rock/r, Paper/p, Scissors/s - Best out of 3 - Run number {} - Score is {}:{}",
+                run, player_wins, npc_wins
             );
         }
 
@@ -62,9 +50,11 @@ fn main() {
             .read_line(&mut choice)
             .expect("Failed to read line");
 
-        let choice: u32 = match get_num(choice) {
-            Ok(num) => num,
-            Err(_) => {
+        let choice = match choice.trim() {
+            "rock" | "r" => Choice::Rock,
+            "paper" | "p" => Choice::Paper,
+            "scissors" | "scissor" | "s" => Choice::Scissors,
+            _ => {
                 println!("Input invalid");
                 continue;
             }
@@ -72,29 +62,33 @@ fn main() {
 
         run += 1;
 
-        let npc_choice = rand::thread_rng().gen_range(0..=2);
+        let npc_choice = match rand::thread_rng().gen_range(0..=2) {
+            0 => Choice::Rock,
+            1 => Choice::Paper,
+            2 => Choice::Scissors,
+            _ => unreachable!(),
+        };
         println!(
             "You chose {}, computer chose {}",
-            get_name(choice),
-            get_name(npc_choice)
+            choice.get_name(),
+            npc_choice.get_name()
         );
-
         if npc_choice == choice {
             println!("Player and computer tie");
-        } else if choice == get_strength(npc_choice) {
-            println!(
-                "{} beats {} - Player loses",
-                get_name(npc_choice),
-                get_name(choice)
-            );
-            npc_wins += 1;
-        } else {
+        } else if choice.get_beats() == npc_choice {
             println!(
                 "{} beats {} - Player wins",
-                get_name(choice),
-                get_name(npc_choice)
+                choice.get_name(),
+                npc_choice.get_name()
             );
             player_wins += 1;
+        } else {
+            println!(
+                "{} beats {} - Player loses",
+                npc_choice.get_name(),
+                choice.get_name()
+            );
+            npc_wins += 1;
         }
 
         if run >= 3 && player_wins != npc_wins {
